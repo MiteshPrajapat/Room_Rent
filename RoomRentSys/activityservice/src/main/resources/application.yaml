@@ -1,3 +1,11 @@
 spring:
   application:
     name: activityservice
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/Activity
+      database: Activity
+
+server:
+  port: 8082

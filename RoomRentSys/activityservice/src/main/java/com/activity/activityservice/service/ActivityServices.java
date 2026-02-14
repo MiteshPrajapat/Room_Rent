@@ -7,6 +7,8 @@ import com.activity.activityservice.models.Activity;
 import com.activity.activityservice.repository.ActivityRepository;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,6 +16,10 @@ import org.springframework.stereotype.Service;
 public class ActivityServices {
     private final  ActivityRepository activityRepository;
     private final UserValidationService userValidationService;
+    private final KafkaTemplate<String, Activity> kafkaTemplate;
+    @Value("${kafka.topic.name}")
+    private String topicName;
+
     public ActivityResponse trackActivity(ActivityRequest request) {
 
         boolean isValidUser = userValidationService.validateUser(request.getUserId());
@@ -29,6 +35,13 @@ public class ActivityServices {
                 .additionMetics(request.getAdditionMetics())
                 .build();
         Activity savedAct = activityRepository.save(activity);
+        try {
+            kafkaTemplate.send(topicName,savedAct.getUserId(),savedAct);
+        }catch (Exception e) {
+            // Handle Kafka exceptions
+           e.printStackTrace();
+        }
+
         return mapToResponse(savedAct);
 
 
